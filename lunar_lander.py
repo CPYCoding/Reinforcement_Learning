@@ -6,6 +6,7 @@ import torch.optim as optim
 from collections import deque
 import random
 import matplotlib.pyplot as plt
+from utils import print_stats, plot_baseline, record_episodes
 
 # Hyperparameters (you should experiment with these!)
 LEARNING_RATE = 5e-4
@@ -25,7 +26,60 @@ action_dim = env.action_space.n
 print(f"State dimension: {state_dim}")
 print(f"Action dimension: {action_dim}")
 
+def run_random_baseline(num_episodes=100):
+    episode_rewards = []
+    episode_lengths = []
+    successful_episodes = 0
+
+    for episode in range(num_episodes):
+        state, _ = env.reset()
+        done = False
+        total_reward = 0
+        steps = 0
+
+        while not done:
+            action = env.action_space.sample()
+
+            next_state, reward, terminated, truncated, _ = env.step(action)
+
+            done = terminated or truncated
+            total_reward += reward
+            steps += 1
+            state = next_state
+
+        episode_rewards.append(total_reward)
+        episode_lengths.append(steps)
+
+        if total_reward >= 200:
+            successful_episodes += 1
+
+    stats = {
+        "episode_rewards": episode_rewards,
+        "episode_lengths": episode_lengths,
+        "mean_reward": np.mean(episode_rewards),
+        "std_reward": np.std(episode_rewards),
+        "min_reward": np.min(episode_rewards),
+        "max_reward": np.max(episode_rewards),
+        "mean_length": np.mean(episode_lengths),
+        "success_rate": successful_episodes / num_episodes,
+    }
+
+    return stats
+
+baseline_stats = run_random_baseline(num_episodes=100)
+print_stats(baseline_stats)
+plot_baseline(baseline_stats)
+
+record_episodes(
+    num_episodes=5,
+    out_dir="outputs/part_a/random_gifs",
+    policy_fn=lambda state: env.action_space.sample()
+)
+
+env.close()
+exit()
 # TODO: Implement the classes described in Part B
+
 
 # Training loop
 num_episodes = 1000
