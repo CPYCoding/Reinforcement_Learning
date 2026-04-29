@@ -11,7 +11,7 @@ import csv
 from utils import print_stats, plot_baseline, record_episodes
 
 # Hyperparameters (you should experiment with these!)
-LEARNING_RATE = 5e-4
+LEARNING_RATE = 1e-4
 GAMMA = 0.99  # Discount factor
 EPSILON_START = 1.0
 EPSILON_END = 0.01
@@ -184,7 +184,7 @@ agent = DQNAgent(state_dim, action_dim)
 
 # Training loop
 training_log = []
-num_episodes = 2000
+num_episodes = 3000
 rewards_history = []
 epsilon = EPSILON_START
 
@@ -287,5 +287,59 @@ with open("outputs/part_b_c/test_results.txt", "w") as f:
     f.write(f"Success Rate: {(np.array(test_rewards) >= 200).mean() * 100:.1f}%\n")
 
 print("Saved test results to outputs/part_b_c/test_results.txt")
+
+# Part C: Plot training curves
+episodes = [row["episode"] for row in training_log]
+rewards = [row["reward"] for row in training_log]
+epsilons = [row["epsilon"] for row in training_log]
+
+losses = [
+    row["loss"] if row["loss"] != "" else np.nan
+    for row in training_log
+]
+
+# Moving average reward
+window = 100
+moving_avg_rewards = []
+
+for i in range(len(rewards)):
+    if i < window:
+        moving_avg_rewards.append(np.mean(rewards[:i+1]))
+    else:
+        moving_avg_rewards.append(np.mean(rewards[i-window+1:i+1]))
+
+os.makedirs("outputs/part_c", exist_ok=True)
+
+plt.figure(figsize=(10, 6))
+plt.plot(episodes, rewards, alpha=0.4, label="Episode Reward")
+plt.plot(episodes, moving_avg_rewards, label="100-Episode Moving Average")
+plt.axhline(y=200, linestyle="--", label="Solved Threshold (200)")
+plt.xlabel("Episode")
+plt.ylabel("Reward")
+plt.title("Training Reward Curve")
+plt.legend()
+plt.grid(True)
+plt.savefig("outputs/part_c/reward_curve.png")
+plt.close()
+
+plt.figure(figsize=(10, 6))
+plt.plot(episodes, losses)
+plt.xlabel("Episode")
+plt.ylabel("Average Loss")
+plt.title("Training Loss Curve")
+plt.grid(True)
+plt.savefig("outputs/part_c/loss_curve.png")
+plt.close()
+
+plt.figure(figsize=(10, 6))
+plt.plot(episodes, epsilons)
+plt.xlabel("Episode")
+plt.ylabel("Epsilon")
+plt.title("Epsilon Decay Curve")
+plt.grid(True)
+plt.savefig("outputs/part_c/epsilon_curve.png")
+plt.close()
+
+print("Saved Part C plots to outputs/part_c/")
 
 env.close()
