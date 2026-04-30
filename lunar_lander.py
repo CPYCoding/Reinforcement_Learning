@@ -288,7 +288,9 @@ print(f"Max Reward: {np.max(test_rewards):.2f}")
 print(f"Min Reward: {np.min(test_rewards):.2f}")
 print(f"Success Rate: {(np.array(test_rewards) >= 200).mean() * 100:.1f}%")
 
-with open("outputs/part_b/test_results.txt", "w") as f:
+
+os.makedirs("outputs/part_c", exist_ok=True)
+with open("outputs/part_c/test_results.txt", "w") as f:
     f.write("Test Results\n")
     f.write(f"Mean test Reward: {np.mean(test_rewards):.2f}\n")
     f.write(f"Max Reward: {np.max(test_rewards):.2f}\n")
