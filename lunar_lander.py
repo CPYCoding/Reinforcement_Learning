@@ -184,7 +184,7 @@ agent = DQNAgent(state_dim, action_dim)
 
 # Training loop
 training_log = []
-num_episodes = 4000
+num_episodes = 2000
 rewards_history = []
 epsilon = EPSILON_START
 
