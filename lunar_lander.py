@@ -11,7 +11,7 @@ import csv
 from utils import print_stats, plot_baseline, record_episodes
 
 # Hyperparameters (you should experiment with these!)
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 5e-4
 GAMMA = 0.99  # Discount factor
 EPSILON_START = 1.0
 EPSILON_END = 0.01
@@ -184,7 +184,7 @@ agent = DQNAgent(state_dim, action_dim)
 
 # Training loop
 training_log = []
-num_episodes = 3000
+num_episodes = 5000
 rewards_history = []
 epsilon = EPSILON_START
 
