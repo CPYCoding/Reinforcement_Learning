@@ -184,7 +184,7 @@ agent = DQNAgent(state_dim, action_dim)
 
 # Training loop
 training_log = []
-num_episodes = 5000
+num_episodes = 4000
 rewards_history = []
 epsilon = EPSILON_START
 
@@ -193,10 +193,17 @@ for episode in range(num_episodes):
     episode_reward = 0
     done = False
     episode_losses = []
+    episode_q_values = []
     
     while not done:
         # TODO: Select action using epsilon-greedy
         action = agent.select_action(state, epsilon)
+
+        with torch.no_grad():
+            state_tensor = torch.FloatTensor(state).unsqueeze(0)
+            q_values = agent.q_network(state_tensor)
+            episode_q_values.append(q_values.max().item())
+
         # TODO: Take action in environment
         next_state, reward, terminated, truncated, _ = env.step(action)
         done = terminated or truncated
@@ -230,30 +237,32 @@ for episode in range(num_episodes):
     # TODO: Track and log statistics
     rewards_history.append(episode_reward)
     avg_loss = np.mean(episode_losses) if episode_losses else ""
+    avg_q_value = np.mean(episode_q_values) if episode_q_values else ""
 
     training_log.append({
         "episode": episode,
         "reward": episode_reward,
         "epsilon": epsilon,
-        "loss": avg_loss
+        "loss": avg_loss,
+        "avg_q_value": avg_q_value   
     })
     
     if episode % 50 == 0:
         print(f"Episode {episode}, Reward: {episode_reward:.2f}, Epsilon: {epsilon:.3f}")
 
-os.makedirs("outputs/part_b_c", exist_ok=True)
+os.makedirs("outputs/part_b", exist_ok=True)
 
-with open("outputs/part_b_c/training_log.csv", "w", newline="") as f:
+with open("outputs/part_b/training_log.csv", "w", newline="") as f:
     writer = csv.DictWriter(
         f,
-        fieldnames=["episode", "reward", "epsilon", "loss"]
+        fieldnames=["episode", "reward", "epsilon", "loss", "avg_q_value"]
     )
     writer.writeheader()
     writer.writerows(training_log)
 
-print("Saved training log to outputs/part_b_c/training_log.csv")
-torch.save(agent.q_network.state_dict(), "outputs/part_b_c/dqn_lunar_lander.pth")
-print("Saved model to outputs/part_b_c/dqn_lunar_lander.pth")
+print("Saved training log to outputs/part_b/training_log.csv")
+torch.save(agent.q_network.state_dict(), "outputs/part_b/dqn_lunar_lander.pth")
+print("Saved model to outputs/part_b/dqn_lunar_lander.pth")
 
 # Testing
 # TODO: Test your trained agent
@@ -279,14 +288,14 @@ print(f"Max Reward: {np.max(test_rewards):.2f}")
 print(f"Min Reward: {np.min(test_rewards):.2f}")
 print(f"Success Rate: {(np.array(test_rewards) >= 200).mean() * 100:.1f}%")
 
-with open("outputs/part_b_c/test_results.txt", "w") as f:
+with open("outputs/part_b/test_results.txt", "w") as f:
     f.write("Test Results\n")
     f.write(f"Mean test Reward: {np.mean(test_rewards):.2f}\n")
     f.write(f"Max Reward: {np.max(test_rewards):.2f}\n")
     f.write(f"Min Reward: {np.min(test_rewards):.2f}\n")
     f.write(f"Success Rate: {(np.array(test_rewards) >= 200).mean() * 100:.1f}%\n")
 
-print("Saved test results to outputs/part_b_c/test_results.txt")
+print("Saved test results to outputs/part_c/test_results.txt")
 
 # Part C: Plot training curves
 episodes = [row["episode"] for row in training_log]
@@ -340,6 +349,26 @@ plt.grid(True)
 plt.savefig("outputs/part_c/epsilon_curve.png")
 plt.close()
 
+q_values = [
+    row["avg_q_value"] if row["avg_q_value"] != "" else np.nan
+    for row in training_log
+]
+
+plt.figure(figsize=(10, 6))
+plt.plot(episodes, q_values)
+plt.xlabel("Episode")
+plt.ylabel("Average Q-value")
+plt.title("Average Q-value Curve")
+plt.grid(True)
+plt.savefig("outputs/part_c/q_value_curve.png")
+plt.close()
+
 print("Saved Part C plots to outputs/part_c/")
+
+record_episodes(
+    num_episodes=5,
+    out_dir="outputs/part_c/trained_gifs",
+    policy_fn=lambda state: agent.select_action(state, epsilon=0.0)
+)
 
 env.close()
