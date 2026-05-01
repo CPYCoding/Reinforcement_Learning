@@ -68,3 +68,8 @@ The following example shows how to create the environment and record videos. The
 env = gym.make('LunarLander-v3', render_mode='rgb_array')
 env = RecordVideo(env, 'videos/', episode_trigger=lambda x: x % 50 == 0)
 ```
+
+## Main files
+
+The main files of this assignment is lunar_lunder.py and function.py, report.docx and report.pdf.
+For each part, please read the "outputs"
