@@ -19,6 +19,11 @@ BATCH_SIZE = 64
 BUFFER_SIZE = 50000
 TARGET_UPDATE_FREQ = 10  # Update target network every N episodes
 
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
 # Create environment
 env = gym.make('LunarLander-v3')
 state_dim = env.observation_space.shape[0]
@@ -192,7 +197,7 @@ epsilon = EPSILON_START
 solved_at = None
 
 for episode in range(num_episodes):
-    state, _ = env.reset()
+    state, _ = env.reset(seed=SEED + episode)  # Different seed for each episode
     episode_reward = 0
     done = False
     episode_losses = []
@@ -288,7 +293,7 @@ print("Saved model checkpoint to outputs/part_b/dqn_lunar_lander.pt")
 test_rewards = []
 
 for episode in range(100):
-    state, _ = env.reset()
+    state, _ = env.reset(seed=SEED + 10000 + episode)  # Different seed for testing
     total_reward = 0
     done = False
     
