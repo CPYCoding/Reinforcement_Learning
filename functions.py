@@ -9,34 +9,12 @@ from gymnasium.wrappers import RecordVideo
 # ── Video recording ───────────────────────────────────────────────────────────
 
 def make_env_with_video(video_dir='videos/', record_every=50):
-    """Create LunarLander environment with video recording every `record_every` episodes."""
     env = gym.make('LunarLander-v3', render_mode='rgb_array')
     env = RecordVideo(env, video_dir, episode_trigger=lambda x: x % record_every == 0)
     return env
 
 
 def record_episodes(num_episodes: int, out_dir: str, policy_fn) -> None:
-    """
-    Run `num_episodes` using `policy_fn` and save each episode as a GIF.
-
-    Parameters
-    ----------
-    num_episodes : int
-        Number of episodes to record.
-    out_dir : str
-        Directory in which to save the GIF files.
-    policy_fn : callable
-        A function that accepts a state (np.ndarray) and returns an integer action.
-        For the random baseline use: ``policy_fn=lambda s: env.action_space.sample()``
-
-    Hints
-    -----
-    - Use ``gym.make('LunarLander-v3', render_mode='rgb_array')`` so that
-      ``env.render()`` returns an RGB frame (numpy array).
-    - Collect frames in a list during the episode loop, then write them with
-      ``imageio.mimsave(path, frames, fps=30)``.
-    - Name each file ``episode_{ep+1}.gif`` inside *out_dir*.
-    """
     import imageio
     os.makedirs(out_dir, exist_ok=True)
     env = gym.make('LunarLander-v3', render_mode='rgb_array')
@@ -64,30 +42,6 @@ def record_episodes(num_episodes: int, out_dir: str, policy_fn) -> None:
 # Statistics helper functions
 
 def print_stats(stats: dict) -> None:
-    """
-    Print a formatted summary of episode statistics to the console.
-
-    The *stats* dictionary is expected to contain at least:
-        mean_reward, std_reward, min_reward, max_reward,
-        mean_length, success_rate
-
-    Expected output format (example)::
-
-        ----------------------------------------
-        Random Policy Statistics
-        ----------------------------------------
-          Mean reward  :   -123.45 ± 80.23
-          Min / Max    :   -456.78 / 12.34
-          Mean length  :    250.0 steps
-          Success rate :      0.0%
-        ----------------------------------------
-
-    Hints
-    -----
-    - Use f-strings with format specs such as ``:.2f`` and ``:.1f``.
-    - The success rate in *stats* is stored as a fraction (0–1); multiply by 100
-      to display as a percentage.
-    """
     sep = '-' * 40
     print(sep)
     print('Episode Statistics')
@@ -102,61 +56,11 @@ def print_stats(stats: dict) -> None:
 # Plotting helper functions
 
 def moving_average(data, window: int = 20) -> np.ndarray:
-    """
-    Compute a simple moving average using a uniform kernel.
-
-    Parameters
-    ----------
-    data : array-like
-        1-D sequence of values (e.g. per-episode rewards or losses).
-    window : int
-        Number of elements to average over.
-
-    Returns
-    -------
-    np.ndarray
-        Array of length ``len(data) - window + 1`` containing the smoothed
-        values.  The first element is the mean of ``data[0:window]``.
-
-    Hints
-    -----
-    - ``np.convolve(data, kernel, mode='valid')`` with a uniform kernel of
-      length *window* is a one-liner solution.
-    - Remember to normalise the kernel so its values sum to 1.
-    """
     kernel = np.ones(window) / window
     return np.convolve(data, kernel, mode='valid')
 
 
 def plot_baseline(stats: dict, out_path: str = "outputs/part_a/baseline_stats.png") -> None:
-    """
-    Generate a 2×2 figure summarising the random-policy baseline and save it.
-
-    The four sub-plots should be:
-        [0,0] Episode reward over time (line plot + mean horizontal line)
-        [0,1] Reward distribution (histogram + mean vertical line)
-        [1,0] Episode length over time (line plot + mean horizontal line)
-        [1,1] Text summary box (mean, std, min, max, mean length, success rate)
-
-    Parameters
-    ----------
-    stats : dict
-        Dictionary returned by ``run_random_baseline()``; must contain
-        ``episode_rewards``, ``episode_lengths``, ``mean_reward``,
-        ``std_reward``, ``min_reward``, ``max_reward``, ``mean_length``,
-        ``success_rate``.
-    out_path : str
-        File path (PNG) where the figure is saved.
-
-    Hints
-    -----
-    - Use ``plt.subplots(2, 2, figsize=(12, 8))``.
-    - For the text panel use ``axes[1,1].axis('off')`` then
-      ``axes[1,1].text(...)``.  A monospace font and a ``bbox`` with
-      ``boxstyle='round'`` look clean.
-    - Call ``plt.tight_layout()`` before saving.
-    - Use ``plt.close()`` after saving to free memory.
-    """
     rewards  = stats['episode_rewards']
     lengths  = stats['episode_lengths']
     episodes = range(1, len(rewards) + 1)
@@ -218,33 +122,6 @@ def plot_baseline(stats: dict, out_path: str = "outputs/part_a/baseline_stats.pn
 
 
 def plot_training_curves(metrics: dict, out_dir: str = "outputs/part_b_c") -> None:
-    """
-    Generate a 2×2 figure of DQN training diagnostics and save it.
-
-    The four sub-plots should be:
-        [0,0] Episode reward + moving average + solved threshold line
-        [0,1] Training loss (Huber) + moving average  (skip NaN episodes)
-        [1,0] Epsilon decay over episodes
-        [1,1] Mean max Q-value + moving average       (skip NaN episodes)
-
-    Parameters
-    ----------
-    metrics : dict
-        Dictionary returned by the ``train()`` function; must contain
-        ``episode_rewards``, ``avg_losses``, ``epsilons``, ``mean_q_values``,
-        and ``solved_at`` (int or None).
-    out_dir : str
-        Directory in which to save ``training_curves.png``.
-
-    Hints
-    -----
-    - Use your ``moving_average()`` helper for smoothing.
-    - Loss and Q-value lists may contain ``float('nan')`` for early episodes
-      before the buffer is warm; filter these out before plotting.
-    - If ``solved_at`` is not None, draw a vertical dashed line on the reward
-      sub-plot to mark the episode where the environment was solved.
-    - Save to ``os.path.join(out_dir, 'training_curves.png')``.
-    """
     SOLVED_THRESHOLD = 200.0
     window   = 20
     rewards  = metrics['episode_rewards']
@@ -328,7 +205,6 @@ def plot_training_curves(metrics: dict, out_dir: str = "outputs/part_b_c") -> No
 # Checkpoint helper functions
 
 def save_checkpoint(agent, episode: int, rewards: list, filename: str) -> None:
-    """Save agent weights, optimiser state, and reward history to a .pt file."""
     torch.save({
         'episode': episode,
         'model_state_dict': agent.q_network.state_dict(),
@@ -338,13 +214,6 @@ def save_checkpoint(agent, episode: int, rewards: list, filename: str) -> None:
 
 
 def load_checkpoint(agent, filename: str):
-    """
-    Load a checkpoint saved by ``save_checkpoint`` into *agent*.
-
-    Returns
-    -------
-    (episode, rewards_history) : (int, list)
-    """
     checkpoint = torch.load(filename)
     agent.q_network.load_state_dict(checkpoint['model_state_dict'])
     agent.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

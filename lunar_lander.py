@@ -5,10 +5,9 @@ import torch.nn as nn
 import torch.optim as optim
 from collections import deque
 import random
-import matplotlib.pyplot as plt
 import os
 import csv
-from utils import print_stats, plot_baseline, record_episodes
+from functions import print_stats, plot_baseline, record_episodes, plot_training_curves, save_checkpoint
 
 # Hyperparameters (you should experiment with these!)
 LEARNING_RATE = 5e-4
@@ -186,7 +185,11 @@ agent = DQNAgent(state_dim, action_dim)
 training_log = []
 num_episodes = 2000
 rewards_history = []
+avg_losses = []
+epsilons = []
+mean_q_values = []
 epsilon = EPSILON_START
+solved_at = None
 
 for episode in range(num_episodes):
     state, _ = env.reset()
@@ -236,8 +239,13 @@ for episode in range(num_episodes):
     )
     # TODO: Track and log statistics
     rewards_history.append(episode_reward)
-    avg_loss = np.mean(episode_losses) if episode_losses else ""
-    avg_q_value = np.mean(episode_q_values) if episode_q_values else ""
+
+    avg_loss = np.mean(episode_losses) if episode_losses else float("nan")
+    avg_q_value = np.mean(episode_q_values) if episode_q_values else float("nan")
+
+    avg_losses.append(avg_loss)
+    epsilons.append(epsilon)
+    mean_q_values.append(avg_q_value)
 
     training_log.append({
         "episode": episode,
@@ -247,6 +255,11 @@ for episode in range(num_episodes):
         "avg_q_value": avg_q_value   
     })
     
+    if episode >= 99:
+        recent_avg = np.mean(rewards_history[-100:])
+        if recent_avg >= 200 and solved_at is None:
+            solved_at = episode
+
     if episode % 50 == 0:
         print(f"Episode {episode}, Reward: {episode_reward:.2f}, Epsilon: {epsilon:.3f}")
 
@@ -261,8 +274,14 @@ with open("outputs/part_b/training_log.csv", "w", newline="") as f:
     writer.writerows(training_log)
 
 print("Saved training log to outputs/part_b/training_log.csv")
-torch.save(agent.q_network.state_dict(), "outputs/part_b/dqn_lunar_lander.pth")
-print("Saved model to outputs/part_b/dqn_lunar_lander.pth")
+
+save_checkpoint(
+    agent,
+    num_episodes,
+    rewards_history,
+    "outputs/part_b/dqn_lunar_lander.pt"
+)
+print("Saved model checkpoint to outputs/part_b/dqn_lunar_lander.pt")
 
 # Testing
 # TODO: Test your trained agent
@@ -300,72 +319,15 @@ with open("outputs/part_c/test_results.txt", "w") as f:
 print("Saved test results to outputs/part_c/test_results.txt")
 
 # Part C: Plot training curves
-episodes = [row["episode"] for row in training_log]
-rewards = [row["reward"] for row in training_log]
-epsilons = [row["epsilon"] for row in training_log]
+metrics = {
+    "episode_rewards": rewards_history,
+    "avg_losses": avg_losses,
+    "epsilons": epsilons,
+    "mean_q_values": mean_q_values,
+    "solved_at": solved_at,
+}
 
-losses = [
-    row["loss"] if row["loss"] != "" else np.nan
-    for row in training_log
-]
-
-# Moving average reward
-window = 100
-moving_avg_rewards = []
-
-for i in range(len(rewards)):
-    if i < window:
-        moving_avg_rewards.append(np.mean(rewards[:i+1]))
-    else:
-        moving_avg_rewards.append(np.mean(rewards[i-window+1:i+1]))
-
-os.makedirs("outputs/part_c", exist_ok=True)
-
-plt.figure(figsize=(10, 6))
-plt.plot(episodes, rewards, alpha=0.4, label="Episode Reward")
-plt.plot(episodes, moving_avg_rewards, label="100-Episode Moving Average")
-plt.axhline(y=200, linestyle="--", label="Solved Threshold (200)")
-plt.xlabel("Episode")
-plt.ylabel("Reward")
-plt.title("Training Reward Curve")
-plt.legend()
-plt.grid(True)
-plt.savefig("outputs/part_c/reward_curve.png")
-plt.close()
-
-plt.figure(figsize=(10, 6))
-plt.plot(episodes, losses)
-plt.xlabel("Episode")
-plt.ylabel("Average Loss")
-plt.title("Training Loss Curve")
-plt.grid(True)
-plt.savefig("outputs/part_c/loss_curve.png")
-plt.close()
-
-plt.figure(figsize=(10, 6))
-plt.plot(episodes, epsilons)
-plt.xlabel("Episode")
-plt.ylabel("Epsilon")
-plt.title("Epsilon Decay Curve")
-plt.grid(True)
-plt.savefig("outputs/part_c/epsilon_curve.png")
-plt.close()
-
-q_values = [
-    row["avg_q_value"] if row["avg_q_value"] != "" else np.nan
-    for row in training_log
-]
-
-plt.figure(figsize=(10, 6))
-plt.plot(episodes, q_values)
-plt.xlabel("Episode")
-plt.ylabel("Average Q-value")
-plt.title("Average Q-value Curve")
-plt.grid(True)
-plt.savefig("outputs/part_c/q_value_curve.png")
-plt.close()
-
-print("Saved Part C plots to outputs/part_c/")
+plot_training_curves(metrics, out_dir="outputs/part_c")
 
 record_episodes(
     num_episodes=5,
