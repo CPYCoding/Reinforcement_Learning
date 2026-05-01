@@ -10,14 +10,14 @@ import csv
 from functions import print_stats, plot_baseline, record_episodes, plot_training_curves, save_checkpoint
 
 # Hyperparameters (you should experiment with these!)
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-3
 GAMMA = 0.99  # Discount factor
 EPSILON_START = 1.0
 EPSILON_END = 0.01
-EPSILON_DECAY = 0.995
+EPSILON_DECAY = 0.990
 BATCH_SIZE = 64
 BUFFER_SIZE = 10000
-TARGET_UPDATE_FREQ = 5  # Update target network every N episodes
+TARGET_UPDATE_FREQ = 20  # Update target network every N episodes
 
 SEED = 42
 random.seed(SEED)
