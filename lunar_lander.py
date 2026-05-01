@@ -72,18 +72,18 @@ def run_random_baseline(num_episodes=100):
 
     return stats
 
-# baseline_stats = run_random_baseline(num_episodes=100)
-# print_stats(baseline_stats)
-# plot_baseline(baseline_stats)
+baseline_stats = run_random_baseline(num_episodes=100)
+print_stats(baseline_stats)
+plot_baseline(baseline_stats)
 
-# record_episodes(
+record_episodes(
     num_episodes=5,
     out_dir="outputs/part_a/random_gifs",
     policy_fn=lambda state: env.action_space.sample()
-# )
+)
 
-# env.close()
-# exit()
+env.close()
+exit()
 # TODO: Implement the classes described in Part B
 class QNetwork(nn.Module):
     def __init__(self, state_dim, action_dim):
