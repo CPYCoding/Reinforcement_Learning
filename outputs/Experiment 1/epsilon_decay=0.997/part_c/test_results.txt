@@ -1,5 +1,5 @@
 Test Results
-Mean test Reward: -667.42
-Max Reward: -64.19
-Min Reward: -3023.22
-Success Rate: 0.0%
+Mean test Reward: 137.23
+Max Reward: 318.28
+Min Reward: -414.73
+Success Rate: 65.0%
