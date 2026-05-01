@@ -69,6 +69,7 @@ env = gym.make('LunarLander-v3', render_mode='rgb_array')
 env = RecordVideo(env, 'videos/', episode_trigger=lambda x: x % 50 == 0)
 ```
 
-## Main codes
+## Main files
 
-The main code of this assignment is lunar_lunder.py and function.py.
+The main files of this assignment is lunar_lunder.py and function.py, report.docx and report.pdf.
+For each part, please read the "outputs"
